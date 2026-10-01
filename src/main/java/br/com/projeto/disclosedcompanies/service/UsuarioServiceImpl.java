@@ -6,6 +6,8 @@ import br.com.projeto.disclosedcompanies.model.Usuario;
 import br.com.projeto.disclosedcompanies.repository.UsuarioRepository;
 import jakarta.validation.ConstraintViolationException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -103,16 +105,16 @@ public class UsuarioServiceImpl implements UsuarioService {
                 .build();
     }
 
-    /** Delega ao repositório a busca por todos os usuários do tipo "empresa". */
+    /** Delega ao repositório a busca por todos os usuários do tipo "empresa" com paginação. */
     @Override
-    public List<Usuario> listarEmpresas() {
-        return repository.findByTipo("empresa");
+    public Page<Usuario> listarEmpresas(Pageable pageable) {
+        return repository.findByTipo("empresa", pageable);
     }
 
-    /** Delega ao repositório a busca por empresas de uma categoria específica. */
+    /** Delega ao repositório a busca por empresas de uma categoria específica com paginação. */
     @Override
-    public List<Usuario> listarEmpresasPorCategoria(String categoria) {
-        return repository.findByTipoAndCategoria("empresa", categoria);
+    public Page<Usuario> listarEmpresasPorCategoria(String categoria, Pageable pageable) {
+        return repository.findByTipoAndCategoria("empresa", categoria, pageable);
     }
 
     /**

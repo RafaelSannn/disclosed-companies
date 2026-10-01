@@ -3,6 +3,8 @@ package br.com.projeto.disclosedcompanies.service;
 import br.com.projeto.disclosedcompanies.model.Publicacao;
 import br.com.projeto.disclosedcompanies.repository.PublicacaoRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
@@ -28,16 +30,16 @@ public class PublicacaoServiceImpl implements PublicacaoService {
         return repository.save(pub);
     }
 
-    /** Delega a busca por usuário ao repositório. */
+    /** Delega a busca por usuário ao repositório com paginação. */
     @Override
-    public List<Publicacao> listarPorUsuario(Long usuarioId) {
-        return repository.findByUsuarioId(usuarioId);
+    public Page<Publicacao> listarPorUsuario(Long usuarioId, Pageable pageable) {
+        return repository.findByUsuarioId(usuarioId, pageable);
     }
 
-    /** Delega a busca por tipo de autor ao repositório. */
+    /** Delega a busca por tipo de autor ao repositório com paginação. */
     @Override
-    public List<Publicacao> listarPorTipo(String tipo) {
-        return repository.findByTipoAutor(tipo);
+    public Page<Publicacao> listarPorTipo(String tipo, Pageable pageable) {
+        return repository.findByTipoAutor(tipo, pageable);
     }
 
     /**

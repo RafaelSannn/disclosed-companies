@@ -2,6 +2,8 @@ package br.com.projeto.disclosedcompanies.service;
 
 import br.com.projeto.disclosedcompanies.dto.LoginResponse;
 import br.com.projeto.disclosedcompanies.model.Usuario;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
@@ -31,11 +33,11 @@ public interface UsuarioService {
      */
     LoginResponse login(String email, String senha);
 
-    /** Retorna todos os usuários do tipo "empresa". */
-    List<Usuario> listarEmpresas();
+    /** Retorna todos os usuários do tipo "empresa" com paginação. */
+    Page<Usuario> listarEmpresas(Pageable pageable);
 
-    /** Retorna empresas filtradas por categoria de atuação. */
-    List<Usuario> listarEmpresasPorCategoria(String categoria);
+    /** Retorna empresas filtradas por categoria de atuação com paginação. */
+    Page<Usuario> listarEmpresasPorCategoria(String categoria, Pageable pageable);
 
     /**
      * Atualiza os campos de perfil de um usuário (nome, foto, localização, categoria, descrição).

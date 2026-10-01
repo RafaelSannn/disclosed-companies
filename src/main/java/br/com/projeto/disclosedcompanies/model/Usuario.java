@@ -18,7 +18,12 @@ import lombok.Data;
  */
 @Data
 @Entity
-@Table(name = "usuarios")
+@Table(name = "usuarios", indexes = {
+    @Index(name = "idx_usuario_tipo", columnList = "tipo"),
+    @Index(name = "idx_usuario_tipo_categoria", columnList = "tipo, categoria"),
+    @Index(name = "idx_usuario_email", columnList = "email"),
+    @Index(name = "idx_usuario_cnpj", columnList = "cnpj")
+})
 public class Usuario {
 
     /** Identificador único gerado automaticamente pelo banco (auto_increment). */

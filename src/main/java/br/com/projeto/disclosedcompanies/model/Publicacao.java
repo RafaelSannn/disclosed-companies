@@ -13,7 +13,11 @@ import java.time.LocalDateTime;
  */
 @Data
 @Entity
-@Table(name = "publicacoes")
+@Table(name = "publicacoes", indexes = {
+    @Index(name = "idx_publicacao_usuario_id", columnList = "usuario_id"),
+    @Index(name = "idx_publicacao_tipo_autor", columnList = "tipo_autor"),
+    @Index(name = "idx_publicacao_data_criacao", columnList = "data_criacao")
+})
 public class Publicacao {
 
     /** Identificador único gerado automaticamente pelo banco. */

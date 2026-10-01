@@ -4,6 +4,10 @@ import br.com.projeto.disclosedcompanies.dto.LoginResponse;
 import br.com.projeto.disclosedcompanies.model.Usuario;
 import br.com.projeto.disclosedcompanies.service.UsuarioService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,21 +32,36 @@ public class UsuarioController {
 
     /**
      * GET /php/usuarios/empresas
-     * Retorna todas as empresas cadastradas. Usado pela tela "Explorar Empresas".
+     * Retorna todas as empresas cadastradas com paginação.
+     * Parâmetros: page (default 0), size (default 20), sort (default nome,asc)
      * O campo "senha" nunca aparece no JSON graças ao @JsonIgnore na entidade.
      */
     @GetMapping("/usuarios/empresas")
-    public List<Usuario> listarEmpresas() {
-        return service.listarEmpresas();
+    public Page<Usuario> listarEmpresas(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "nome,asc") String[] sort) {
+        
+        Sort.Direction direction = sort.length > 1 && sort[1].equalsIgnoreCase("desc")
+            ? Sort.Direction.DESC
+            : Sort.Direction.ASC;
+        Pageable pageable = PageRequest.of(page, size, Sort.by(direction, sort[0]));
+        return service.listarEmpresas(pageable);
     }
 
     /**
      * GET /php/usuarios/empresa/{categoria}
-     * Retorna empresas filtradas por categoria. Alimenta o select de filtro do frontend.
+     * Retorna empresas filtradas por categoria com paginação.
+     * Parâmetros: page (default 0), size (default 20)
      */
     @GetMapping("/usuarios/empresa/{categoria}")
-    public List<Usuario> listarEmpresaPorCategoria(@PathVariable String categoria) {
-        return service.listarEmpresasPorCategoria(categoria);
+    public Page<Usuario> listarEmpresaPorCategoria(
+            @PathVariable String categoria,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size) {
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by("nome"));
+        return service.listarEmpresasPorCategoria(categoria, pageable);
     }
 
     /**

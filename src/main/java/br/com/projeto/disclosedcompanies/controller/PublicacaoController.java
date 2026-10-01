@@ -3,6 +3,10 @@ package br.com.projeto.disclosedcompanies.controller;
 import br.com.projeto.disclosedcompanies.model.Publicacao;
 import br.com.projeto.disclosedcompanies.service.PublicacaoService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,22 +40,34 @@ public class PublicacaoController {
 
     /**
      * GET /api/publicacoes/usuario/{id}
-     * Retorna todas as publicações de um usuário específico.
-     * Usado na aba "Minhas Publicações" do dashboard.
+     * Retorna publicações de um usuário com paginação.
+     * Parâmetros: page (default 0), size (default 10)
+     * Ordenadas por data de criação (mais recentes primeiro).
      */
     @GetMapping("/usuario/{id}")
-    public List<Publicacao> listarPorUsuario(@PathVariable Long id) {
-        return service.listarPorUsuario(id);
+    public Page<Publicacao> listarPorUsuario(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by("dataCriacao").descending());
+        return service.listarPorUsuario(id, pageable);
     }
 
     /**
      * GET /api/publicacoes/tipo/{tipo}
-     * Retorna publicações filtradas pelo tipo do autor ("visitante" ou "empresa").
-     * Usado pela empresa para ver as publicações de visitantes.
+     * Retorna publicações filtradas pelo tipo do autor com paginação.
+     * Parâmetros: page (default 0), size (default 10)
+     * Ordenadas por data de criação (mais recentes primeiro).
      */
     @GetMapping("/tipo/{tipo}")
-    public List<Publicacao> listarPorTipo(@PathVariable String tipo) {
-        return service.listarPorTipo(tipo);
+    public Page<Publicacao> listarPorTipo(
+            @PathVariable String tipo,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+        
+        Pageable pageable = PageRequest.of(page, size, Sort.by("dataCriacao").descending());
+        return service.listarPorTipo(tipo, pageable);
     }
 
     /**

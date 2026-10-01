@@ -1,6 +1,8 @@
 package br.com.projeto.disclosedcompanies.repository;
 
 import br.com.projeto.disclosedcompanies.model.Publicacao;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 
@@ -13,13 +15,12 @@ import java.util.List;
  */
 public interface PublicacaoRepository extends JpaRepository<Publicacao, Long> {
 
-    /** Retorna todas as publicações criadas por um usuário específico. */
-    List<Publicacao> findByUsuarioId(Long usuarioId);
+    /** Retorna todas as publicações criadas por um usuário específico com paginação. */
+    Page<Publicacao> findByUsuarioId(Long usuarioId, Pageable pageable);
 
     /**
-     * Retorna publicações filtradas pelo tipo do autor.
-     * Usado pela tela da empresa para exibir publicações de visitantes
-     * (busca por tipoAutor = "visitante").
+     * Retorna publicações filtradas pelo tipo do autor com paginação.
+     * Usado pela tela da empresa para exibir publicações de visitantes.
      */
-    List<Publicacao> findByTipoAutor(String tipoAutor);
+    Page<Publicacao> findByTipoAutor(String tipoAutor, Pageable pageable);
 }

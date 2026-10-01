@@ -6,6 +6,8 @@ import tools.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 
 import java.util.List;
 
@@ -25,7 +27,8 @@ class UsuarioControllerTest {
         usuarioService.cadastrar("Empresa Teste", "empresa2@test.com", "senha123",
                 "empresa", "São Paulo", "98.765.432/0001-00", "tecnologia");
 
-        List<Usuario> empresas = usuarioService.listarEmpresas();
+        Page<Usuario> empresasPage = usuarioService.listarEmpresas(PageRequest.of(0, 20));
+        List<Usuario> empresas = empresasPage.getContent();
 
         for (Usuario empresa : empresas) {
             String json = objectMapper.writeValueAsString(empresa);
