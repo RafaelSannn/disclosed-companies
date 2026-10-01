@@ -1,97 +1,101 @@
 /* ==========================================
    VARIÁVEIS CSS PARA TEMA CLARO E ESCURO
+   Paleta: Emerald Green (Tailwind CSS / Material Design)
+   Primário : #059669  (Emerald 600)
+   Hover    : #047857  (Emerald 700)
+   Sucesso  : #16a34a  (Green 600)
    ========================================== */
 
 :root {
     /* Cores de fundo */
-    --bg-primary: #f4f7f6;
+    --bg-primary: #f0fdf4;
     --bg-secondary: #ffffff;
-    --bg-tertiary: #f9f9f9;
-    --bg-card: #fdfdfd;
+    --bg-tertiary: #f7fdf9;
+    --bg-card: #fdfefd;
     --bg-input: #ffffff;
     --bg-modal: #fefefe;
-    --bg-chat: #e5ddd5;
-    --bg-chat-sent: #dcf8c6;
+    --bg-chat: #d1fae5;
+    --bg-chat-sent: #bbf7d0;
     --bg-chat-received: #ffffff;
-    
+
     /* Cores de texto */
-    --text-primary: #333;
-    --text-secondary: #555;
-    --text-tertiary: #777;
-    --text-heading: #2c3e50;
-    --text-muted: #888;
-    
+    --text-primary: #1a2e1f;
+    --text-secondary: #374151;
+    --text-tertiary: #6b7280;
+    --text-heading: #064e3b;
+    --text-muted: #9ca3af;
+
     /* Cores de borda */
-    --border-light: #eee;
-    --border-medium: #ddd;
-    --border-dark: #e0e0e0;
-    --border-input: #ccc;
-    
-    /* Cores de ação */
-    --color-primary: #007bff;
-    --color-primary-hover: #0056b3;
-    --color-success: #28a745;
-    --color-success-hover: #218838;
-    --color-danger: #dc3545;
-    --color-neutral: #6c757d;
-    
+    --border-light: #d1fae5;
+    --border-medium: #a7f3d0;
+    --border-dark: #6ee7b7;
+    --border-input: #a7f3d0;
+
+    /* Cores de ação — Emerald Green */
+    --color-primary: #059669;
+    --color-primary-hover: #047857;
+    --color-success: #16a34a;
+    --color-success-hover: #15803d;
+    --color-danger: #dc2626;
+    --color-neutral: #6b7280;
+
     /* Cores de destaque */
-    --color-link: #007bff;
-    --color-filter-bg: #f0f8ff;
-    --color-filter-border: #e0f2ff;
-    --color-filter-text: #0056b3;
-    
-    /* Sombras */
-    --shadow-sm: 0 2px 8px rgba(0,0,0,0.05);
-    --shadow-md: 0 4px 15px rgba(0,0,0,0.08);
-    --shadow-lg: 0 6px 20px rgba(0,0,0,0.1);
-    --shadow-xl: 0 8px 30px rgba(0,0,0,0.2);
+    --color-link: #059669;
+    --color-filter-bg: #ecfdf5;
+    --color-filter-border: #a7f3d0;
+    --color-filter-text: #047857;
+
+    /* Sombras com tom esverdeado suave */
+    --shadow-sm: 0 2px 8px rgba(5,150,105,0.07);
+    --shadow-md: 0 4px 15px rgba(5,150,105,0.10);
+    --shadow-lg: 0 6px 20px rgba(5,150,105,0.13);
+    --shadow-xl: 0 8px 30px rgba(0,0,0,0.18);
 }
 
 [data-theme='dark'] {
-    /* Cores de fundo */
-    --bg-primary: #1a1a1a;
-    --bg-secondary: #2d2d2d;
-    --bg-tertiary: #242424;
-    --bg-card: #2d2d2d;
-    --bg-input: #3a3a3a;
-    --bg-modal: #2d2d2d;
-    --bg-chat: #1e1e1e;
-    --bg-chat-sent: #005c4b;
-    --bg-chat-received: #2d2d2d;
-    
+    /* Cores de fundo — dark com tom verde profundo */
+    --bg-primary: #0d1f17;
+    --bg-secondary: #132a1e;
+    --bg-tertiary: #0f2318;
+    --bg-card: #132a1e;
+    --bg-input: #1a3526;
+    --bg-modal: #132a1e;
+    --bg-chat: #0a1f13;
+    --bg-chat-sent: #064e3b;
+    --bg-chat-received: #132a1e;
+
     /* Cores de texto */
-    --text-primary: #e0e0e0;
-    --text-secondary: #b0b0b0;
-    --text-tertiary: #999;
-    --text-heading: #f0f0f0;
-    --text-muted: #888;
-    
+    --text-primary: #d1fae5;
+    --text-secondary: #a7f3d0;
+    --text-tertiary: #6ee7b7;
+    --text-heading: #ecfdf5;
+    --text-muted: #6b7280;
+
     /* Cores de borda */
-    --border-light: #404040;
-    --border-medium: #505050;
-    --border-dark: #3a3a3a;
-    --border-input: #505050;
-    
-    /* Cores de ação (mantém as mesmas para consistência) */
-    --color-primary: #0d6efd;
-    --color-primary-hover: #0a58ca;
-    --color-success: #198754;
-    --color-success-hover: #157347;
-    --color-danger: #dc3545;
-    --color-neutral: #6c757d;
-    
+    --border-light: #1e4030;
+    --border-medium: #2d5c42;
+    --border-dark: #1a3526;
+    --border-input: #2d5c42;
+
+    /* Cores de ação — Emerald mais brilhante no dark */
+    --color-primary: #10b981;
+    --color-primary-hover: #059669;
+    --color-success: #22c55e;
+    --color-success-hover: #16a34a;
+    --color-danger: #f87171;
+    --color-neutral: #9ca3af;
+
     /* Cores de destaque */
-    --color-link: #4dabf7;
-    --color-filter-bg: #1e2936;
-    --color-filter-border: #2c3e50;
-    --color-filter-text: #4dabf7;
-    
+    --color-link: #34d399;
+    --color-filter-bg: #0d1f17;
+    --color-filter-border: #1e4030;
+    --color-filter-text: #6ee7b7;
+
     /* Sombras */
-    --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
-    --shadow-md: 0 4px 15px rgba(0,0,0,0.4);
-    --shadow-lg: 0 6px 20px rgba(0,0,0,0.5);
-    --shadow-xl: 0 8px 30px rgba(0,0,0,0.6);
+    --shadow-sm: 0 2px 8px rgba(0,0,0,0.35);
+    --shadow-md: 0 4px 15px rgba(0,0,0,0.45);
+    --shadow-lg: 0 6px 20px rgba(0,0,0,0.55);
+    --shadow-xl: 0 8px 30px rgba(0,0,0,0.65);
 }
 
 /* Estilos gerais */
@@ -768,8 +772,8 @@
             z-index: 2;
         }
         .password-toggle:hover {
-            color: #007bff;
-            background-color: rgba(0, 123, 255, 0.06);
+            color: var(--color-primary);
+            background-color: rgba(5, 150, 105, 0.06);
             transform: none;
         }
 
@@ -802,7 +806,7 @@
             background: var(--color-primary);
             color: white;
             border-color: var(--color-primary);
-            box-shadow: 0 2px 8px rgba(0, 123, 255, 0.3);
+            box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
         }
         .toggle-pill input[type="radio"] {
             position: absolute;
