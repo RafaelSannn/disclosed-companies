@@ -175,7 +175,7 @@
             <img id="profileVisitorImage" class="profile-image-display" src="" alt="Foto de Perfil">
             <div class="form-group">
                 <label for="uploadVisitorImage">Alterar Foto de Perfil:</label>
-                <input type="file" id="uploadVisitorImage" accept="image/*" onchange="handleProfileImageUpload('uploadVisitorImage', 'profileVisitorImage', 'visitor')">
+                <input type="file" id="uploadVisitorImage" accept="image/jpeg,image/png,image/webp" onchange="mostrarFotoPerfil(this, 'profileVisitorImage')">
             </div>
             <p><strong>ID de Visitante:</strong> <span id="profileVisitorId"></span></p>
             <p><strong>Email:</strong> <span id="profileVisitorEmail"></span></p>
@@ -184,7 +184,7 @@
                 <input type="text" id="editarNomeVisitante">
             </div>
         </div>
-        <button onclick="salvarVisitante()">Salvar Alterações</button>
+        <button onclick="salvarVisitante(this)">Salvar Alterações</button>
     </div>
 
     <div id="visitorServicePublications" class="profile-page publications-section">
@@ -219,7 +219,7 @@
             <img id="profileCompanyProfileImage" class="profile-image-display" src="" alt="Foto de Perfil da Empresa">
             <div class="form-group">
                 <label for="uploadCompanyProfileImage">Alterar Foto de Perfil:</label>
-                <input type="file" id="uploadCompanyProfileImage" accept="image/*" onchange="handleProfileImageUpload('uploadCompanyProfileImage', 'profileCompanyProfileImage', 'company')">
+                <input type="file" id="uploadCompanyProfileImage" accept="image/jpeg,image/png,image/webp" onchange="mostrarFotoPerfil(this, 'profileCompanyProfileImage')">
             </div>
             <p><strong>ID da Empresa:</strong> <span id="profileCompanyId"></span></p>
             <p><strong>Email:</strong> <span id="profileCompanyEmail"></span></p>
@@ -262,12 +262,12 @@
                 <p><strong>Visualizações do Perfil:</strong> <span id="companyViewsCount">0</span></p>
             </div>
             <div class="form-group">
-                <label for="imagensEmpresa">Imagens do Perfil (múltiplas):</label>
-                <input type="file" id="imagensEmpresa" accept="image/*" multiple onchange="mostrarImagensEmpresa()">
+                <label for="imagensEmpresa">Imagens do perfil (até 3)</label>
+                <input type="file" id="imagensEmpresa" accept="image/jpeg,image/png,image/webp" multiple onchange="mostrarPreviaGaleria(this, 'previewImagensEmpresa')">
                 <div id="previewImagensEmpresa" class="image-gallery"></div>
             </div>
         </div>
-        <button onclick="salvarEmpresa()">Salvar Alterações</button>
+        <button onclick="salvarEmpresa(this)">Salvar Alterações</button>
     </div>
 
     <div id="companyServicePublications" class="profile-page publications-section">
@@ -297,18 +297,18 @@
         <h3>Adicionar Nova Publicação de Serviço</h3>
         <div class="form-group">
             <label for="pubTitulo">Título:</label>
-            <input type="text" id="pubTitulo" required>
+            <input type="text" id="pubTitulo" maxlength="255" required>
         </div>
         <div class="form-group">
             <label for="pubDescricao">Descrição:</label>
             <textarea id="pubDescricao" rows="5" required></textarea>
         </div>
         <div class="form-group">
-            <label for="pubImagens">Imagens (múltiplas):</label>
-            <input type="file" id="pubImagens" accept="image/*" multiple onchange="mostrarImagensPublicacao()">
+            <label for="pubImagens">Imagens (até 3)</label>
+            <input type="file" id="pubImagens" accept="image/jpeg,image/png,image/webp" multiple onchange="mostrarPreviaGaleria(this, 'previewPubImagens')">
             <div id="previewPubImagens" class="image-gallery"></div>
         </div>
-        <button onclick="adicionarPublicacao()">Publicar</button>
+        <button onclick="adicionarPublicacao(this)">Publicar</button>
     </div>
 </div>
 
@@ -318,18 +318,18 @@
         <h3>Adicionar Nova Publicação de Serviço (Empresa)</h3>
         <div class="form-group">
             <label for="companyPubTitulo">Título:</label>
-            <input type="text" id="companyPubTitulo" required>
+            <input type="text" id="companyPubTitulo" maxlength="255" required>
         </div>
         <div class="form-group">
             <label for="companyPubDescricao">Descrição:</label>
             <textarea id="companyPubDescricao" rows="5" required></textarea>
         </div>
         <div class="form-group">
-            <label for="companyPubImagens">Imagens (múltiplas):</label>
-            <input type="file" id="companyPubImagens" accept="image/*" multiple onchange="mostrarImagensCompanyPublication()">
+            <label for="companyPubImagens">Imagens (até 3)</label>
+            <input type="file" id="companyPubImagens" accept="image/jpeg,image/png,image/webp" multiple onchange="mostrarPreviaGaleria(this, 'previewCompanyPubImagens')">
             <div id="previewCompanyPubImagens" class="image-gallery"></div>
         </div>
-        <button onclick="adicionarCompanyPublication()">Publicar</button>
+        <button onclick="adicionarCompanyPublication(this)">Publicar</button>
     </div>
 </div>
 

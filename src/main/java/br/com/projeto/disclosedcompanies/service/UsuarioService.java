@@ -45,5 +45,5 @@ public interface UsuarioService {
      * Retorna mapa com "status" e "mensagem".
      */
     Map<String, String> atualizarPerfil(Long id, String nome, String profileImage,
-                                        String localizacao, String categoria, String descricao);
+                                        String localizacao, String categoria, String descricao, List<String> imagensPerfil);
 }

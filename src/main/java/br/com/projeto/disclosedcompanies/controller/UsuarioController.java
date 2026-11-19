@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -101,9 +102,11 @@ public class UsuarioController {
             @RequestParam(required = false) String profileImage,
             @RequestParam(required = false) String localizacao,
             @RequestParam(required = false) String categoria,
-            @RequestParam(required = false) String descricao) {
+            @RequestParam(required = false) String descricao,
+            @RequestParam MultiValueMap<String, String> campos) {
 
-        Map<String, String> response = service.atualizarPerfil(id, nome, profileImage, localizacao, categoria, descricao);
+        Map<String, String> response = service.atualizarPerfil(
+                id, nome, profileImage, localizacao, categoria, descricao, campos.get("imagensPerfil"));
         if ("erro".equals(response.get("status"))) {
             return ResponseEntity.badRequest().body(response);
         }

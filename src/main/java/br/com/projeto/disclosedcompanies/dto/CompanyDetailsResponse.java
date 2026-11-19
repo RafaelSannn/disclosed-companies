@@ -12,9 +12,7 @@ import java.util.List;
  * O script2.js usa este objeto para preencher a tela de perfil da empresa
  * e o modal de detalhes na listagem de "Explorar Empresas".
  *
- * Os campos "views" e "images" são placeholders — views é sempre 0 e images
- * é sempre uma lista vazia nesta versão, pois contagem de visitas e galeria
- * de imagens ainda não foram implementadas no backend.
+ * A contagem de visualizações do perfil ainda não é calculada.
  */
 @Data
 @Builder
@@ -38,6 +36,6 @@ public class CompanyDetailsResponse {
     /** Contador de visualizações do perfil (não implementado — sempre 0). */
     private int views;
 
-    /** Galeria de imagens do perfil (não implementada — sempre lista vazia). */
+    /** Imagens salvas na galeria do perfil. */
     private List<String> images;
 }

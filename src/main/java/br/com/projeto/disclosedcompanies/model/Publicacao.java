@@ -3,6 +3,7 @@ package br.com.projeto.disclosedcompanies.model;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Entidade JPA que representa uma publicação de serviço na plataforma.
@@ -34,11 +35,15 @@ public class Publicacao {
     private String descricao;
 
     /**
-     * Imagens da publicação codificadas em Base64 (string única).
+     * Primeira imagem da publicação. Mantém o formato usado nos registros existentes.
      * LONGTEXT para suportar imagens sem risco de truncamento.
      */
     @Column(columnDefinition = "LONGTEXT")
     private String imagens;
+
+    @Convert(converter = GaleriaImagensConverter.class)
+    @Column(columnDefinition = "LONGTEXT")
+    private List<String> imagensAdicionais = List.of();
 
     /** Tipo do autor: "visitante" ou "empresa". Usado para filtrar no feed. */
     private String tipoAutor;

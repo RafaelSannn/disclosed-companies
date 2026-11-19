@@ -2,14 +2,12 @@
 // script2.js - VERSÃO OOP COM BACKEND FILTER & BCRYPT
 // ==========================================
 
-let users = []; // Serve agora como cache apenas para o Modal de Empresas
 let currentLoggedInUser = null;
 let currentChatWith = null;
 let chatInterval = null; // Variável global para o motor de atualização do chat
 
 const DEFAULT_PROFILE_IMAGE = 'https://via.placeholder.com/150/007bff/FFFFFF?text=Perfil';
 const DEFAULT_COMPANY_IMAGE = 'https://via.placeholder.com/150/28a745/FFFFFF?text=Empresa';
-const DEFAULT_PUBLICATION_IMAGE = 'https://via.placeholder.com/120/808080/FFFFFF?text=Serviço';
 
 // ==========================================
 // 1. CLASSES
@@ -37,9 +35,9 @@ class Visitante extends Usuario {
 class Empresa extends Usuario {
     constructor(id, nome, email, companyDetails) {
         super(id, nome, email, 'empresa');
-        this.companyDetails = companyDetails || {
+        this.companyDetails = {
             name: nome, location: '', category: '', description: '',
-            profileImage: DEFAULT_COMPANY_IMAGE, views: 0, images: [], cnpj: ''
+            profileImage: DEFAULT_COMPANY_IMAGE, views: 0, images: [], cnpj: '', ...companyDetails
         };
     }
     renderProfile() {
@@ -51,13 +49,19 @@ class Empresa extends Usuario {
         document.getElementById('descricaoEmpresa').value = this.companyDetails.description || '';
         document.getElementById('companyViewsCount').textContent = this.companyDetails.views || 0;
         document.getElementById('profileCompanyProfileImage').src = this.companyDetails.profileImage || DEFAULT_COMPANY_IMAGE;
+        inserirGaleria(document.getElementById('previewImagensEmpresa'), this.companyDetails.images || []);
     }
 }
 
 class UserFactory {
     static criar(data) {
         if (!data) return null;
-        if (data.tipo === 'empresa') return new Empresa(data.id, data.nome || data.name, data.email, data.companyDetails);
+        if (data.tipo === 'empresa') {
+            return new Empresa(data.id, data.nome || data.name, data.email, {
+                ...data.companyDetails,
+                profileImage: data.profileImage ?? data.companyDetails?.profileImage
+            });
+        }
         return new Visitante(data.id, data.nome || data.name, data.email, data.profileImage);
     }
 }
@@ -295,49 +299,111 @@ function logout() {
 // ==========================================
 // 4. FILTRO INTELIGENTE NO BACKEND
 // ==========================================
-function renderCompanies(categoria = '') {
-    const div = document.getElementById('listaEmpresas');
-    if(!div) return;
+function elemento(tag, texto, classe) {
+    const node = document.createElement(tag);
+    if (texto) node.textContent = texto;
+    if (classe) node.className = classe;
+    return node;
+}
 
-    const url = categoria ? `/php/usuarios/empresa/${categoria}` : `/php/usuarios/empresas`;
+function botao(texto, aoClicar) {
+    const node = elemento('button', texto);
+    node.type = 'button';
+    node.addEventListener('click', aoClicar);
+    return node;
+}
 
-    fetch(url)
-    .then(res => res.json())
-    .then(empresas => {
-        users = empresas; // Cache
-        if (empresas.length === 0) return div.innerHTML = '<p>Nenhuma empresa encontrada com os filtros atuais.</p>';
+async function respostaJson(response) {
+    const dados = await response.json().catch(() => null);
+    if (!response.ok || dados?.status === 'erro') {
+        throw new Error(dados?.mensagem || dados?.message || 'O servidor não conseguiu concluir a operação.');
+    }
+    return dados;
+}
 
-        div.innerHTML = empresas.map(e => `
-            <div class="company-card">
-                <h3>${e.nome}</h3>
-                <p><strong>Categoria:</strong> ${e.categoria || 'N/A'}</p>
-                <p><strong>Localização:</strong> ${e.localizacao || 'N/A'}</p>
-                <button onclick="iniciarChatGenerico(${e.id}, '${e.nome}')">Entrar em Contacto</button>
-                <button onclick="openCompanyDetailsModal(${e.id})" style="background-color: #6c757d; margin-left: 5px;">Ver Perfil</button>
-            </div>
-        `).join('');
+const carregamentos = new WeakMap();
+
+async function carregarPagina(url, container, renderItem, vazio, numero = 0, tamanho = 10) {
+    const pedido = new AbortController();
+    carregamentos.get(container)?.abort();
+    carregamentos.set(container, pedido);
+    container.replaceChildren(elemento('p', 'Carregando...'));
+
+    try {
+        const query = new URLSearchParams({ page: numero, size: tamanho });
+        const response = await fetch(url + '?' + query, { signal: pedido.signal });
+        const pagina = await respostaJson(response);
+        if (pedido.signal.aborted) return;
+
+        const itens = pagina.content.map(item => renderItem(item, pagina));
+        container.replaceChildren(...(itens.length ? itens : [elemento('p', vazio)]));
+
+        if (pagina.totalPages > 1) {
+            const navegacao = elemento('p');
+            const anterior = botao('Anterior', () => carregarPagina(url, container, renderItem, vazio, pagina.number - 1, tamanho));
+            const proxima = botao('Próxima', () => carregarPagina(url, container, renderItem, vazio, pagina.number + 1, tamanho));
+            anterior.disabled = pagina.first;
+            proxima.disabled = pagina.last;
+            navegacao.append(anterior, ' Página ' + (pagina.number + 1) + ' de ' + pagina.totalPages + ' ', proxima);
+            container.appendChild(navegacao);
+        }
+    } catch (erro) {
+        if (!pedido.signal.aborted) {
+            container.replaceChildren(elemento('p', 'Não foi possível carregar os resultados.'),
+                botao('Tentar novamente', () => carregarPagina(url, container, renderItem, vazio, numero, tamanho)));
+        }
+    }
+}
+
+function imagemValida(src) {
+    return typeof src === 'string' && /^(data:image\/(?:jpeg|png|webp|gif);base64,|https?:\/\/)/i.test(src);
+}
+
+function inserirGaleria(container, imagens) {
+    const nos = imagens.filter(imagemValida).map((src, index) => {
+        const img = elemento('img');
+        img.alt = 'Foto ' + (index + 1);
+        img.loading = 'lazy';
+        img.src = src;
+        return img;
     });
+    container.replaceChildren(...nos);
+}
+
+function renderCompanies(categoria = '') {
+    const url = categoria ? '/php/usuarios/empresa/' + encodeURIComponent(categoria) : '/php/usuarios/empresas';
+    return carregarPagina(url, document.getElementById('listaEmpresas'), empresa => {
+        const card = elemento('div', null, 'company-card');
+        card.append(elemento('h3', empresa.nome),
+            elemento('p', 'Categoria: ' + (empresa.categoria || 'Não informada')),
+            elemento('p', 'Localização: ' + (empresa.localizacao || 'Não informada')),
+            botao('Entrar em contato', () => iniciarChatGenerico(empresa.id, empresa.nome)),
+            botao('Ver perfil', () => openCompanyDetailsModal(empresa)));
+        return card;
+    }, 'Nenhuma empresa encontrada com os filtros atuais.');
 }
 
 function filtrarEmpresas() {
-    const categoria = document.getElementById('filtroCategoria').value;
-    renderCompanies(categoria);
+    return renderCompanies(document.getElementById('filtroCategoria').value);
 }
 
-function openCompanyDetailsModal(id) {
-    const company = users.find(u => u.id === id);
-    if (!company) return;
+function openCompanyDetailsModal(company) {
+    const conteudo = document.getElementById('modalCompanyContent');
+    const foto = elemento('img', null, 'profile-image-display');
+    foto.src = imagemValida(company.profileImage) ? company.profileImage : DEFAULT_COMPANY_IMAGE;
+    foto.alt = 'Foto do perfil da empresa';
+    const galeria = elemento('div', null, 'image-gallery');
+    inserirGaleria(galeria, company.imagensPerfil || []);
+    conteudo.replaceChildren(foto, elemento('h3', company.nome), elemento('p', 'E-mail: ' + company.email),
+        elemento('p', 'Localização: ' + (company.localizacao || 'Não informada')),
+        elemento('p', 'Categoria: ' + (company.categoria || 'Não informada')),
+        elemento('p', company.descricao || ''), galeria);
 
-    document.getElementById('modalCompanyContent').innerHTML = `
-        <img class="profile-image-display" src="${company.profileImage || DEFAULT_COMPANY_IMAGE}">
-        <h3>${company.nome}</h3>
-        <p><strong>Email:</strong> ${company.email}</p>
-        <p><strong>Localização:</strong> ${company.localizacao || 'Não informada'}</p>
-        <p><strong>Categoria:</strong> ${company.categoria}</p>
-        <p><strong>Descrição:</strong> ${company.descricao || ''}</p>
-    `;
     currentChatWith = { targetUserId: company.id, targetUserName: company.nome };
     document.getElementById('companyDetailsModal').style.display = 'flex';
+    return carregarPagina('/api/publicacoes/usuario/' + company.id,
+        document.getElementById('modalCompanyPublicationsList'), pub => cartaoPublicacao(pub),
+        'Esta empresa ainda não tem publicações.');
 }
 
 function startChatFromCompanyDetails() {
@@ -348,95 +414,97 @@ function startChatFromCompanyDetails() {
 // ==========================================
 // 5. CRUD DE PUBLICAÇÕES
 // ==========================================
-function openAddPublicationModal() {
-    document.getElementById('pubTitulo').value = ''; document.getElementById('pubDescricao').value = '';
-    document.getElementById('addPublicationModal').style.display = 'flex';
+const FORMULARIO_VISITANTE = {
+    titulo: 'pubTitulo', descricao: 'pubDescricao', imagens: 'pubImagens',
+    previa: 'previewPubImagens', modal: 'addPublicationModal'
+};
+const FORMULARIO_EMPRESA = {
+    titulo: 'companyPubTitulo', descricao: 'companyPubDescricao', imagens: 'companyPubImagens',
+    previa: 'previewCompanyPubImagens', modal: 'addCompanyPublicationModal'
+};
+
+function abrirFormularioPublicacao(campos) {
+    [campos.titulo, campos.descricao, campos.imagens].forEach(id => {
+        document.getElementById(id).value = '';
+    });
+    document.getElementById(campos.previa).replaceChildren();
+    document.getElementById(campos.modal).style.display = 'flex';
 }
-function openAddCompanyPublicationModal() {
-    document.getElementById('companyPubTitulo').value = ''; document.getElementById('companyPubDescricao').value = '';
-    document.getElementById('addCompanyPublicationModal').style.display = 'flex';
-}
 
-function processarEEnviarPublicacao(tituloId, descId, imgId, modalId) {
-    const titulo = document.getElementById(tituloId).value;
-    const descricao = document.getElementById(descId).value;
-    const imgFile = document.getElementById(imgId) ? document.getElementById(imgId).files[0] : null;
+function openAddPublicationModal() { abrirFormularioPublicacao(FORMULARIO_VISITANTE); }
+function openAddCompanyPublicationModal() { abrirFormularioPublicacao(FORMULARIO_EMPRESA); }
 
-    if (!titulo || !descricao) return alert('Preenche o título e a descrição.');
+async function processarEEnviarPublicacao(campos, button) {
+    const titulo = document.getElementById(campos.titulo).value.trim();
+    const descricao = document.getElementById(campos.descricao).value.trim();
+    const arquivos = Array.from(document.getElementById(campos.imagens).files);
+    if (!titulo || !descricao) {
+        alert('Preencha o título e a descrição.');
+        return;
+    }
 
-    const autor = currentLoggedInUser.tipo === 'visitante' ? currentLoggedInUser.nome : currentLoggedInUser.companyDetails.name;
-    const payload = {
-        titulo: titulo, descricao: descricao, tipoAutor: currentLoggedInUser.tipo,
-        nomeAutor: autor, usuarioId: currentLoggedInUser.id, imagens: ""
-    };
-
-    const dispararPost = () => {
-        fetch('/api/publicacoes', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-        })
-        .then(() => {
-            alert('Guardado!');
-            closeModal(modalId);
-            renderPublications(currentLoggedInUser.tipo);
+    const autor = currentLoggedInUser;
+    button.disabled = true;
+    try {
+        const [imagem = '', ...imagensAdicionais] = await prepararGaleria(arquivos);
+        const response = await fetch('/api/publicacoes', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                titulo, descricao, tipoAutor: autor.tipo, nomeAutor: autor.nome,
+                usuarioId: autor.id, imagens: imagem, imagensAdicionais
+            })
         });
-    };
-
-    if (imgFile) {
-        const reader = new FileReader();
-        reader.onload = e => { payload.imagens = e.target.result; dispararPost(); };
-        reader.readAsDataURL(imgFile);
-    } else {
-        dispararPost();
+        await respostaJson(response);
+        if (currentLoggedInUser !== autor) return;
+        closeModal(campos.modal);
+        await renderPublications(autor.tipo);
+        alert('Publicação salva.');
+    } catch (erro) {
+        alert(erro.message || 'Não foi possível salvar a publicação.');
+    } finally {
+        button.disabled = false;
     }
 }
 
-function adicionarPublicacao() { processarEEnviarPublicacao('pubTitulo', 'pubDescricao', 'pubImagens', 'addPublicationModal'); }
-function adicionarCompanyPublication() { processarEEnviarPublicacao('companyPubTitulo', 'companyPubDescricao', 'companyPubImagens', 'addCompanyPublicationModal'); }
+function adicionarPublicacao(button) { return processarEEnviarPublicacao(FORMULARIO_VISITANTE, button); }
+function adicionarCompanyPublication(button) { return processarEEnviarPublicacao(FORMULARIO_EMPRESA, button); }
 
-function renderPublications(tipo) {
-    const containerId = tipo === 'visitante' ? 'visitorPublications' : 'companyPublications';
-    const div = document.getElementById(containerId);
-    if (!div) return;
-
-    fetch(`/api/publicacoes/usuario/${currentLoggedInUser.id}`)
-    .then(res => res.json())
-    .then(pubs => {
-        if (pubs.length === 0) return div.innerHTML = '<p>Ainda não tens publicações.</p>';
-        div.innerHTML = pubs.map(p => `
-            <div class="publication-entry">
-                <h4>${p.titulo}</h4>
-                <p class="meta">Publicado em: ${new Date(p.dataCriacao).toLocaleString()}</p>
-                <p>${p.descricao}</p>
-                ${p.imagens ? `<div class="image-gallery"><img src="${p.imagens}"></div>` : ''}
-                <button style="background-color: #dc3545; margin-top: 10px;" onclick="excluirPublicacao(${p.id}, '${tipo}')">Excluir</button>
-            </div>
-        `).join('');
-    });
+function cartaoPublicacao(pub, acao = null, mostrarAutor = false) {
+    const card = elemento('div', null, 'publication-entry');
+    const metadados = mostrarAutor ? 'Por: ' + pub.nomeAutor
+        : 'Publicado em: ' + new Date(pub.dataCriacao).toLocaleString('pt-BR');
+    card.append(elemento('h4', pub.titulo), elemento('p', metadados, 'meta'), elemento('p', pub.descricao));
+    const galeria = elemento('div', null, 'image-gallery');
+    inserirGaleria(galeria, [pub.imagens, ...(pub.imagensAdicionais || [])]);
+    if (galeria.childElementCount) card.appendChild(galeria);
+    if (acao) card.appendChild(acao);
+    return card;
 }
 
-function excluirPublicacao(id, tipo) {
-    if (confirm('Eliminar permanentemente da Base de Dados?')) {
-        fetch(`/api/publicacoes/${id}`, { method: 'DELETE' }).then(() => renderPublications(tipo));
+function renderPublications(tipo, numero = 0) {
+    const containerId = tipo === 'visitante' ? 'visitorPublications' : 'companyPublications';
+    return carregarPagina('/api/publicacoes/usuario/' + currentLoggedInUser.id, document.getElementById(containerId),
+        (pub, pagina) => cartaoPublicacao(pub, botao('Excluir', () => excluirPublicacao(pub.id, tipo, pagina))),
+        'Você ainda não tem publicações.', numero);
+}
+
+async function excluirPublicacao(id, tipo, pagina) {
+    if (!confirm('Excluir esta publicação?')) return;
+    try {
+        const response = await fetch('/api/publicacoes/' + id, { method: 'DELETE' });
+        if (!response.ok) await respostaJson(response);
+        const numero = pagina.content.length === 1 ? Math.max(0, pagina.number - 1) : pagina.number;
+        await renderPublications(tipo, numero);
+    } catch (erro) {
+        alert(erro.message || 'Não foi possível excluir a publicação.');
     }
 }
 
 function renderAllVisitorPublications() {
-    const list = document.getElementById('allVisitorPublicationsList');
-    if(!list) return;
-    fetch(`/api/publicacoes/tipo/visitante`)
-    .then(res => res.json())
-    .then(pubs => {
-        if (pubs.length === 0) return list.innerHTML = '<p>Nenhuma publicação.</p>';
-        list.innerHTML = pubs.map(pub => `
-            <div class="publication-entry">
-                <h4>${pub.titulo}</h4>
-                <p class="meta">Por: ${pub.nomeAutor}</p>
-                <p>${pub.descricao}</p>
-                ${pub.imagens ? `<div class="image-gallery"><img src="${pub.imagens}"></div>` : ''}
-                <button onclick="iniciarChatGenerico(${pub.usuarioId}, '${pub.nomeAutor}')" style="margin-top: 10px;">Entrar em Contacto</button>
-            </div>
-        `).join('');
-    });
+    return carregarPagina('/api/publicacoes/tipo/visitante', document.getElementById('allVisitorPublicationsList'),
+        pub => cartaoPublicacao(pub, botao('Entrar em contato', () => iniciarChatGenerico(pub.usuarioId, pub.nomeAutor)), true),
+        'Nenhuma publicação de visitante para exibir.');
 }
 
 // ==========================================
@@ -566,87 +634,132 @@ function sendMessage() {
 // 7. ATUALIZAÇÃO DE PERFIL
 // ==========================================
 
-let pendingVisitorImage = null;
-let pendingCompanyImage = null;
+const MAX_FOTOS_GALERIA = 3;
+const MAX_FOTO_KB = 400;
+const FORMATOS_FOTO = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
-function handleProfileImageUpload(inputId, imgId, type) {
-    const file = document.getElementById(inputId).files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-        document.getElementById(imgId).src = e.target.result;
-        if (type === 'visitor') pendingVisitorImage = e.target.result;
-        else pendingCompanyImage = e.target.result;
-    };
-    reader.readAsDataURL(file);
-}
-
-function salvarVisitante() {
-    const nome = document.getElementById('editarNomeVisitante').value.trim();
-    const formData = new FormData();
-    formData.append('id', currentLoggedInUser.id);
-    if (nome) formData.append('nome', nome);
-    if (pendingVisitorImage) formData.append('profileImage', pendingVisitorImage);
-
-    fetch('/php/perfil.php', { method: 'PUT', body: formData })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.mensagem);
-        if (data.status === 'sucesso') {
-            if (nome) currentLoggedInUser.nome = nome;
-            if (pendingVisitorImage) currentLoggedInUser.profileImage = pendingVisitorImage;
-            pendingVisitorImage = null;
-            localStorage.setItem('currentLoggedInUser', JSON.stringify(currentLoggedInUser));
-            currentLoggedInUser.renderProfile();
-        }
-    }).catch(err => console.error('Erro ao salvar perfil:', err));
-}
-
-function salvarEmpresa() {
-    const nome = document.getElementById('editarNomeEmpresa').value.trim();
-    const localizacao = document.getElementById('editarLocalizacaoEmpresa').value.trim();
-    const categoria = document.getElementById('editarCategoriaEmpresa').value;
-    const descricao = document.getElementById('descricaoEmpresa').value.trim();
-
-    const formData = new FormData();
-    formData.append('id', currentLoggedInUser.id);
-    if (nome) formData.append('nome', nome);
-    formData.append('localizacao', localizacao);
-    formData.append('categoria', categoria);
-    formData.append('descricao', descricao);
-    if (pendingCompanyImage) formData.append('profileImage', pendingCompanyImage);
-
-    fetch('/php/perfil.php', { method: 'PUT', body: formData })
-    .then(res => res.json())
-    .then(data => {
-        alert(data.mensagem);
-        if (data.status === 'sucesso') {
-            if (nome) { currentLoggedInUser.nome = nome; currentLoggedInUser.companyDetails.name = nome; }
-            currentLoggedInUser.companyDetails.location = localizacao;
-            currentLoggedInUser.companyDetails.category = categoria;
-            currentLoggedInUser.companyDetails.description = descricao;
-            if (pendingCompanyImage) currentLoggedInUser.companyDetails.profileImage = pendingCompanyImage;
-            pendingCompanyImage = null;
-            localStorage.setItem('currentLoggedInUser', JSON.stringify(currentLoggedInUser));
-            currentLoggedInUser.renderProfile();
-        }
-    }).catch(err => console.error('Erro ao salvar empresa:', err));
-}
-
-function mostrarImagensEmpresa() {
-    const files = document.getElementById('imagensEmpresa').files;
-    const preview = document.getElementById('previewImagensEmpresa');
-    preview.innerHTML = '';
-    Array.from(files).forEach(file => {
-        const reader = new FileReader();
-        reader.onload = e => {
-            const img = document.createElement('img');
-            img.src = e.target.result;
-            img.style.cssText = 'width:80px;height:80px;object-fit:cover;margin:4px;border-radius:4px;';
-            preview.appendChild(img);
-        };
-        reader.readAsDataURL(file);
+async function prepararFoto(arquivo) {
+    if (!FORMATOS_FOTO.has(arquivo.type) || !arquivo.size || arquivo.size > 20 * 1024 * 1024) {
+        throw new Error('Selecione uma foto JPEG, PNG ou WebP de até 20 MB.');
+    }
+    const imagem = await createImageBitmap(arquivo).catch(() => {
+        throw new Error('Não foi possível abrir a foto selecionada.');
     });
+    try {
+        const escala = Math.min(1, 1200 / Math.max(imagem.width, imagem.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(imagem.width * escala));
+        canvas.height = Math.max(1, Math.round(imagem.height * escala));
+        const contexto = canvas.getContext('2d', { alpha: false });
+        contexto.fillStyle = '#fff';
+        contexto.fillRect(0, 0, canvas.width, canvas.height);
+        contexto.drawImage(imagem, 0, 0, canvas.width, canvas.height);
+        for (const qualidade of [0.85, 0.7, 0.55, 0.4]) {
+            const foto = canvas.toDataURL('image/jpeg', qualidade);
+            const bytesBase64 = foto.slice(foto.indexOf(',') + 1).replace(/=+$/, '').length;
+            if (foto.startsWith('data:image/jpeg;base64,') && Math.floor(bytesBase64 * 3 / 4) <= MAX_FOTO_KB * 1024) {
+                return foto;
+            }
+        }
+        throw new Error('Não foi possível reduzir a foto. Tente uma imagem menor.');
+    } finally {
+        imagem.close();
+    }
+}
+
+async function prepararGaleria(arquivos) {
+    if (arquivos.length > MAX_FOTOS_GALERIA) {
+        throw new Error('Selecione até ' + MAX_FOTOS_GALERIA + ' fotos.');
+    }
+    const fotos = [];
+    for (const arquivo of arquivos) {
+        fotos.push(await prepararFoto(arquivo));
+    }
+    return fotos;
+}
+
+async function mostrarPreviaGaleria(input, destino) {
+    const arquivos = input.files;
+    const previa = document.getElementById(destino);
+    try {
+        const fotos = await prepararGaleria(Array.from(arquivos));
+        if (input.files === arquivos) inserirGaleria(previa, fotos);
+    } catch (erro) {
+        if (input.files === arquivos) {
+            previa.replaceChildren(elemento('p', erro.message));
+        }
+    }
+}
+
+async function mostrarFotoPerfil(input, destino) {
+    const arquivo = input.files[0];
+    if (!arquivo) return;
+    try {
+        const foto = await prepararFoto(arquivo);
+        if (input.files[0] === arquivo) document.getElementById(destino).src = foto;
+    } catch (erro) {
+        if (input.files[0] === arquivo) alert(erro.message);
+    }
+}
+
+async function salvarPerfil(button, campos, fotoInput, galeriaInput = null) {
+    const usuario = currentLoggedInUser;
+    const arquivo = fotoInput.files[0];
+    const arquivosGaleria = Array.from(galeriaInput?.files || []);
+    const formData = new FormData();
+    formData.append('id', usuario.id);
+    for (const [campo, valor] of Object.entries(campos)) {
+        if (campo !== 'nome' || valor) formData.append(campo, valor);
+    }
+
+    button.disabled = true;
+    try {
+        const foto = arquivo ? await prepararFoto(arquivo) : null;
+        const galeria = await prepararGaleria(arquivosGaleria);
+        if (foto) formData.append('profileImage', foto);
+        galeria.forEach(imagem => formData.append('imagensPerfil', imagem));
+
+        const dados = await respostaJson(await fetch('/php/perfil.php', { method: 'PUT', body: formData }));
+        if (currentLoggedInUser !== usuario) return;
+        if (campos.nome) usuario.nome = campos.nome;
+        if (usuario.tipo === 'empresa') {
+            Object.assign(usuario.companyDetails, {
+                name: usuario.nome, location: campos.localizacao, category: campos.categoria, description: campos.descricao
+            });
+            if (foto) usuario.companyDetails.profileImage = foto;
+            if (galeria.length) usuario.companyDetails.images = galeria;
+        } else if (foto) {
+            usuario.profileImage = foto;
+        }
+
+        fotoInput.value = '';
+        if (galeriaInput) galeriaInput.value = '';
+        try {
+            localStorage.setItem('currentLoggedInUser', JSON.stringify(usuario));
+        } catch (erro) {
+            console.warn('O perfil foi salvo no servidor. Não foi possível atualizar a cópia no navegador.', erro);
+        }
+        usuario.renderProfile();
+        alert(dados.mensagem || 'Perfil atualizado.');
+    } catch (erro) {
+        alert(erro.message || 'Não foi possível salvar o perfil.');
+    } finally {
+        button.disabled = false;
+    }
+}
+
+function salvarVisitante(button) {
+    const nome = document.getElementById('editarNomeVisitante').value.trim();
+    return salvarPerfil(button, { nome }, document.getElementById('uploadVisitorImage'));
+}
+
+function salvarEmpresa(button) {
+    return salvarPerfil(button, {
+        nome: document.getElementById('editarNomeEmpresa').value.trim(),
+        localizacao: document.getElementById('editarLocalizacaoEmpresa').value.trim(),
+        categoria: document.getElementById('editarCategoriaEmpresa').value,
+        descricao: document.getElementById('descricaoEmpresa').value.trim()
+    }, document.getElementById('uploadCompanyProfileImage'), document.getElementById('imagensEmpresa'));
 }
 
 // ==========================================

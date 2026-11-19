@@ -7,6 +7,8 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
+import java.util.List;
+
 /**
  * Entidade JPA que representa um usuário da plataforma.
  *
@@ -79,4 +81,8 @@ public class Usuario {
      */
     @Column(columnDefinition = "LONGTEXT")
     private String profileImage;
+
+    @Convert(converter = GaleriaImagensConverter.class)
+    @Column(columnDefinition = "LONGTEXT")
+    private List<String> imagensPerfil = List.of();
 }

@@ -1,5 +1,6 @@
 package br.com.projeto.disclosedcompanies.service;
 
+import br.com.projeto.disclosedcompanies.exception.ValidationException;
 import br.com.projeto.disclosedcompanies.model.Publicacao;
 import br.com.projeto.disclosedcompanies.repository.PublicacaoRepository;
 import lombok.RequiredArgsConstructor;
@@ -27,6 +28,14 @@ public class PublicacaoServiceImpl implements PublicacaoService {
     /** Salva a publicação no banco. O @PrePersist da entidade define dataCriacao automaticamente. */
     @Override
     public Publicacao criar(Publicacao pub) {
+        if (pub.getTitulo() == null || pub.getTitulo().isBlank() || pub.getTitulo().length() > 255) {
+            throw new ValidationException("Informe um título de até 255 caracteres.");
+        }
+        if (pub.getDescricao() == null || pub.getDescricao().isBlank()) {
+            throw new ValidationException("Informe a descrição da publicação.");
+        }
+        if (pub.getImagens() != null && !pub.getImagens().isEmpty()) ImagemUpload.validar(pub.getImagens());
+        ImagemUpload.validarGaleria(pub.getImagensAdicionais(), 2);
         return repository.save(pub);
     }
 

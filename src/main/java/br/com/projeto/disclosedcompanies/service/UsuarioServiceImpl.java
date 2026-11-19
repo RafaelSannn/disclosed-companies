@@ -126,7 +126,9 @@ public class UsuarioServiceImpl implements UsuarioService {
      */
     @Override
     public Map<String, String> atualizarPerfil(Long id, String nome, String profileImage,
-                                               String localizacao, String categoria, String descricao) {
+                                               String localizacao, String categoria, String descricao, List<String> imagensPerfil) {
+        if (profileImage != null && !profileImage.isEmpty()) ImagemUpload.validar(profileImage);
+        ImagemUpload.validarGaleria(imagensPerfil, 3);
         return repository.findById(id)
                 .map(u -> {
                     if (nome != null && !nome.trim().isEmpty()) u.setNome(nome.trim());
@@ -134,6 +136,7 @@ public class UsuarioServiceImpl implements UsuarioService {
                     if (localizacao != null) u.setLocalizacao(localizacao);
                     if (categoria != null) u.setCategoria(categoria);
                     if (descricao != null) u.setDescricao(descricao);
+                    if (imagensPerfil != null && "empresa".equals(u.getTipo())) u.setImagensPerfil(List.copyOf(imagensPerfil));
                     repository.save(u);
                     return sucesso("Perfil atualizado com sucesso.");
                 })

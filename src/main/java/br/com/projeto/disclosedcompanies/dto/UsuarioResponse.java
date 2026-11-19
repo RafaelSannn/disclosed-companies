@@ -4,7 +4,7 @@ import br.com.projeto.disclosedcompanies.model.Usuario;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.Collections;
+import java.util.List;
 
 /**
  * DTO (Data Transfer Object) de saída para dados de usuário.
@@ -53,7 +53,7 @@ public class UsuarioResponse {
                     .category(u.getCategoria())
                     .description(u.getDescricao())
                     .views(0)
-                    .images(Collections.emptyList())
+                    .images(u.getImagensPerfil() == null ? List.of() : u.getImagensPerfil())
                     .build());
         }
 
